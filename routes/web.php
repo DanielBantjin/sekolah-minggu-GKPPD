@@ -4,10 +4,8 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return 'Render berhasil';
+    return 'Laravel berjalan';
 });
-
-
 
 use App\Http\Controllers\Admin\DashboardPerRoleController;
 
