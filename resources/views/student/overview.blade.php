@@ -1,16 +1,16 @@
 <x-app-layout>
     <div class="p-6">
-        <div class="theme-hero relative overflow-hidden rounded-2xl border border-[var(--border)] px-6 py-8 shadow-sm">
+        <div class="relative overflow-hidden rounded-2xl border border-fuchsia-200 bg-[linear-gradient(135deg,_#7c2d12_0%,_#be185d_45%,_#8b5cf6_100%)] px-6 py-8 shadow-sm">
             <div class="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/10"></div>
             <div class="absolute -bottom-20 -left-10 h-72 w-72 rounded-full bg-white/10"></div>
 
             <div class="relative">
-                <h1 class="text-2xl font-bold text-[var(--white)] sm:text-3xl">Dashboard Murid</h1>
-                <p class="mt-2 text-[var(--white)]/90">Baca renungan hari ini dan catat durasi.</p>
+                <h1 class="text-2xl font-bold text-white sm:text-3xl">Dashboard Murid</h1>
+                <p class="mt-2 text-fuchsia-50">Baca renungan hari ini, catat durasi, dan lanjutkan semangat sekolah minggu.</p>
 
                 <div class="mt-6 flex flex-wrap gap-3">
-                    <span class="inline-flex items-center rounded-full border border-[var(--white)]/20 bg-[var(--white)]/15 px-3 py-1 text-sm font-medium text-[var(--white)]">{{ auth()->user()->name }}</span>
-                    <span class="inline-flex items-center rounded-full border border-[var(--white)]/20 bg-[var(--white)]/15 px-3 py-1 text-sm font-medium text-[var(--white)]">Role: {{ auth()->user()->role?->name ?? '-' }}</span>
+                    <span class="inline-flex items-center rounded-full border border-white/20 bg-white/15 px-3 py-1 text-sm font-medium text-white">🌈 {{ auth()->user()->name }}</span>
+                    <span class="inline-flex items-center rounded-full border border-white/20 bg-white/15 px-3 py-1 text-sm font-medium text-white">Role: {{ auth()->user()->role?->name ?? '-' }}</span>
                 </div>
             </div>
         </div>

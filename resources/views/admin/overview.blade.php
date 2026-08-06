@@ -1,17 +1,17 @@
 <x-app-layout>
     <div class="space-y-6">
-        <div class="theme-hero relative overflow-hidden rounded-3xl border border-[var(--border)] px-6 py-8 shadow-xl">
+        <div class="relative overflow-hidden rounded-3xl border border-indigo-200 bg-[linear-gradient(135deg,_#172554_0%,_#4338ca_45%,_#2563eb_100%)] px-6 py-8 shadow-xl">
             <div class="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/10"></div>
             <div class="absolute -bottom-20 -left-10 h-72 w-72 rounded-full bg-white/10"></div>
 
             <div class="relative">
-                <p class="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--white)]/90">Panel Admin</p>
-                <h1 class="mt-2 text-2xl font-bold text-[var(--white)] sm:text-3xl">Dashboard Administrator</h1>
-                <p class="mt-2 max-w-2xl text-sm leading-6 text-[var(--white)]/90 sm:text-base">Kelola data sekolah minggu, mulai dari user, murid, renungan, kegiatan, kehadiran, hingga keuangan dalam satu ruang kerja yang lebih rapi.</p>
+                <p class="text-sm font-semibold uppercase tracking-[0.3em] text-indigo-100">Panel Admin</p>
+                <h1 class="mt-2 text-2xl font-bold text-white sm:text-3xl">Dashboard Administrator</h1>
+                <p class="mt-2 max-w-2xl text-sm leading-6 text-indigo-50 sm:text-base">Kelola data sekolah minggu, mulai dari user, murid, renungan, kegiatan, kehadiran, hingga keuangan dalam satu ruang kerja yang lebih rapi.</p>
 
                 <div class="mt-6 flex flex-wrap gap-3">
-                    <span class="inline-flex items-center rounded-full border border-[var(--white)]/20 bg-[var(--white)]/15 px-3 py-1 text-sm font-medium text-[var(--white)] shadow-sm">{{ auth()->user()->name }}</span>
-                    <span class="inline-flex items-center rounded-full border border-[var(--white)]/20 bg-[var(--white)]/15 px-3 py-1 text-sm font-medium text-[var(--white)] shadow-sm">Role: {{ auth()->user()->role?->name ?? '-' }}</span>
+                    <span class="inline-flex items-center rounded-full border border-white/20 bg-white/15 px-3 py-1 text-sm font-medium text-white shadow-sm">👑 {{ auth()->user()->name }}</span>
+                    <span class="inline-flex items-center rounded-full border border-white/20 bg-white/15 px-3 py-1 text-sm font-medium text-white shadow-sm">Role: {{ auth()->user()->role?->name ?? '-' }}</span>
                 </div>
             </div>
         </div>

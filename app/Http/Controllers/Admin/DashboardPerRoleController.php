@@ -17,7 +17,7 @@ class DashboardPerRoleController extends Controller
         $roleName = $role?->name;
 
         return match ($roleName) {
-            'admin' => view('admin.overview'),
+            'admin' => app(DashboardController::class)->index($request),
             'guru' => view('teacher.overview'),
             'murid' => view('student.overview'),
             default => view('dashboard'),

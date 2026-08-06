@@ -8,17 +8,30 @@ use App\Models\Attendance;
 use App\Models\Finance;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class DashboardController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
         $user = Auth::user();
+        $period = in_array($request->query('period'), ['week', 'month'], true) ? $request->query('period') : 'week';
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
 
-        $attendanceRecords = Attendance::query()->orderBy('date')->get();
+        $attendanceRecords = Attendance::query()
+            ->when($startDate, function ($query, $value) {
+                $query->whereDate('date', '>=', $value);
+            })
+            ->when($endDate, function ($query, $value) {
+                $query->whereDate('date', '<=', $value);
+            })
+            ->orderBy('date')
+            ->get();
+
         $attendanceSummary = [
             'records' => $attendanceRecords->count(),
             'present' => (int) $attendanceRecords->sum('present_count'),
@@ -28,7 +41,16 @@ class DashboardController extends Controller
                 : 0,
         ];
 
-        $financeRecords = Finance::query()->orderBy('date')->get();
+        $financeRecords = Finance::query()
+            ->when($startDate, function ($query, $value) {
+                $query->whereDate('date', '>=', $value);
+            })
+            ->when($endDate, function ($query, $value) {
+                $query->whereDate('date', '<=', $value);
+            })
+            ->orderBy('date')
+            ->get();
+
         $income = (float) $financeRecords->where('type', 'pemasukan')->sum('amount');
         $expense = (float) $financeRecords->where('type', 'pengeluaran')->sum('amount');
         $financeSummary = [
@@ -39,13 +61,27 @@ class DashboardController extends Controller
         ];
 
         $attendanceTrend = $attendanceRecords
-            ->groupBy(fn ($record) => $record->date->format('d M'))
-            ->map(fn ($group, $label) => [
-                'label' => $label,
-                'present' => (int) $group->sum('present_count'),
-                'total' => (int) $group->sum('total_count'),
-            ])
-            ->take(6)
+            ->groupBy(function ($record) use ($period) {
+                $date = Carbon::parse($record->date);
+
+                return $period === 'month'
+                    ? $date->format('Y-m')
+                    : $date->startOfWeek()->format('Y-m-d');
+            })
+            ->map(function ($group, $key) use ($period) {
+                $date = Carbon::createFromFormat($period === 'month' ? 'Y-m' : 'Y-m-d', $key);
+
+                $label = $period === 'month'
+                    ? $date->translatedFormat('M Y')
+                    : $date->translatedFormat('d M') . ' - ' . $date->copy()->addDays(6)->translatedFormat('d M');
+
+                return [
+                    'label' => $label,
+                    'present' => (int) $group->sum('present_count'),
+                    'total' => (int) $group->sum('total_count'),
+                ];
+            })
+            ->sortBy(fn ($item) => $item['label'])
             ->values();
 
         $monthlyFinance = $financeRecords
@@ -58,8 +94,27 @@ class DashboardController extends Controller
             ->take(6)
             ->values();
 
-        $recentActivities = Activity::query()->latest('date')->take(5)->get();
-        $recentTransactions = Finance::query()->latest('date')->take(5)->get();
+        $recentActivities = Activity::query()
+            ->when($startDate, function ($query, $value) {
+                $query->whereDate('date', '>=', $value);
+            })
+            ->when($endDate, function ($query, $value) {
+                $query->whereDate('date', '<=', $value);
+            })
+            ->latest('date')
+            ->take(5)
+            ->get();
+
+        $recentTransactions = Finance::query()
+            ->when($startDate, function ($query, $value) {
+                $query->whereDate('date', '>=', $value);
+            })
+            ->when($endDate, function ($query, $value) {
+                $query->whereDate('date', '<=', $value);
+            })
+            ->latest('date')
+            ->take(5)
+            ->get();
 
         return view('admin.dashboard', compact(
             'user',
@@ -68,13 +123,27 @@ class DashboardController extends Controller
             'attendanceTrend',
             'monthlyFinance',
             'recentActivities',
-            'recentTransactions'
+            'recentTransactions',
+            'period',
+            'startDate',
+            'endDate'
         ));
     }
 
-    public function exportExcel()
+    public function exportExcel(Request $request)
     {
-        $attendanceRecords = Attendance::query()->orderBy('date')->get();
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+
+        $attendanceRecords = Attendance::query()
+            ->when($startDate, function ($query, $value) {
+                $query->whereDate('date', '>=', $value);
+            })
+            ->when($endDate, function ($query, $value) {
+                $query->whereDate('date', '<=', $value);
+            })
+            ->orderBy('date')
+            ->get();
         $attendanceSummary = [
             'records' => $attendanceRecords->count(),
             'present' => (int) $attendanceRecords->sum('present_count'),
@@ -84,7 +153,16 @@ class DashboardController extends Controller
                 : 0,
         ];
 
-        $financeRecords = Finance::query()->orderBy('date')->get();
+        $financeRecords = Finance::query()
+            ->when($startDate, function ($query, $value) {
+                $query->whereDate('date', '>=', $value);
+            })
+            ->when($endDate, function ($query, $value) {
+                $query->whereDate('date', '<=', $value);
+            })
+            ->orderBy('date')
+            ->get();
+
         $income = (float) $financeRecords->where('type', 'pemasukan')->sum('amount');
         $expense = (float) $financeRecords->where('type', 'pengeluaran')->sum('amount');
         $balance = $income - $expense;
@@ -106,18 +184,35 @@ class DashboardController extends Controller
         $rows[] = ['Total Pengeluaran', 'Rp ' . number_format($expense, 0, ',', '.')];
         $rows[] = ['Saldo', 'Rp ' . number_format($balance, 0, ',', '.')];
 
-        $fileName = 'laporan-kehadiran-keuangan.xlsx';
-        $tempPath = storage_path('app/' . $fileName);
-        Excel::store(collect($rows)->map(fn ($row) => $row), $fileName, 'local');
+        $fileName = 'laporan-kehadiran-keuangan.csv';
 
-        return response()->download($tempPath, $fileName, [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        ]);
+        $handle = fopen('php://temp', 'r+');
+        foreach ($rows as $row) {
+            fputcsv($handle, $row, ';');
+        }
+        rewind($handle);
+        $content = stream_get_contents($handle);
+        fclose($handle);
+
+        return response($content, 200)
+            ->header('Content-Type', 'text/csv; charset=UTF-8')
+            ->header('Content-Disposition', 'attachment; filename="' . $fileName . '"');
     }
 
-    public function pdf()
+    public function pdf(Request $request)
     {
-        $attendanceRecords = Attendance::query()->orderBy('date')->get();
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+
+        $attendanceRecords = Attendance::query()
+            ->when($startDate, function ($query, $value) {
+                $query->whereDate('date', '>=', $value);
+            })
+            ->when($endDate, function ($query, $value) {
+                $query->whereDate('date', '<=', $value);
+            })
+            ->orderBy('date')
+            ->get();
         $attendanceSummary = [
             'records' => $attendanceRecords->count(),
             'present' => (int) $attendanceRecords->sum('present_count'),
@@ -127,12 +222,30 @@ class DashboardController extends Controller
                 : 0,
         ];
 
-        $financeRecords = Finance::query()->orderBy('date')->get();
+        $financeRecords = Finance::query()
+            ->when($startDate, function ($query, $value) {
+                $query->whereDate('date', '>=', $value);
+            })
+            ->when($endDate, function ($query, $value) {
+                $query->whereDate('date', '<=', $value);
+            })
+            ->orderBy('date')
+            ->get();
+
         $income = (float) $financeRecords->where('type', 'pemasukan')->sum('amount');
         $expense = (float) $financeRecords->where('type', 'pengeluaran')->sum('amount');
         $balance = $income - $expense;
 
-        $recentTransactions = Finance::query()->latest('date')->take(10)->get();
+        $recentTransactions = Finance::query()
+            ->when($startDate, function ($query, $value) {
+                $query->whereDate('date', '>=', $value);
+            })
+            ->when($endDate, function ($query, $value) {
+                $query->whereDate('date', '<=', $value);
+            })
+            ->latest('date')
+            ->take(10)
+            ->get();
 
         $pdf = Pdf::loadView('admin.reports.pdf', compact(
             'attendanceSummary',

@@ -4,12 +4,12 @@
             <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                     <p class="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--white)]/90">Ringkasan Admin</p>
-                    <h1 class="mt-2 text-2xl font-bold text-[var(--white)] sm:text-3xl">Dashboard Kehadiran & Keuangan</h1>
+                    <h1 class="mt-2 text-2xl font-bold text-[var(--white)] sm:text-3xl">Dashboard Kehadiran &amp; Keuangan</h1>
                     <p class="mt-2 max-w-2xl text-sm text-[var(--white)]/90 sm:text-base">Lihat gambaran singkat performa sekolah minggu dalam satu halaman dan unduh laporan dengan cepat.</p>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                    <a href="{{ route('admin.reports.export-excel') }}" class="rounded-xl border border-[var(--white)]/20 bg-[var(--white)]/15 px-4 py-2 text-sm font-semibold text-[var(--white)] shadow-sm backdrop-blur hover:bg-[var(--white)]/25">⬇ Export Excel</a>
-                    <a href="{{ route('admin.reports.pdf') }}" target="_blank" class="rounded-xl bg-[var(--white)] px-4 py-2 text-sm font-semibold text-[var(--primary)] hover:bg-slate-100">🖨️ Cetak PDF</a>
+                    <a href="{{ route('admin.reports.export-excel', array_filter(['start_date' => $startDate ?? null, 'end_date' => $endDate ?? null], fn ($value) => $value !== null && $value !== '')) }}" class="rounded-xl border border-[var(--white)]/20 bg-[var(--white)]/15 px-4 py-2 text-sm font-semibold text-[var(--white)] shadow-sm backdrop-blur hover:bg-[var(--white)]/25">⬇ Export Excel</a>
+                    <a href="{{ route('admin.reports.pdf', array_filter(['start_date' => $startDate ?? null, 'end_date' => $endDate ?? null], fn ($value) => $value !== null && $value !== '')) }}" target="_blank" class="rounded-xl bg-[var(--white)] px-4 py-2 text-sm font-semibold text-[var(--primary)] hover:bg-slate-100">🖨️ Cetak PDF</a>
                 </div>
             </div>
         </div>
@@ -43,8 +43,27 @@
                     <div class="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">{{ $attendanceSummary['present'] }}/{{ $attendanceSummary['total'] }} hadir</div>
                 </div>
 
+                <form method="GET" action="{{ route('admin.dashboard') }}" class="mt-4 flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                    <input type="hidden" name="period" value="{{ $period }}">
+                    <div>
+                        <label for="start_date" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Dari</label>
+                        <input type="date" id="start_date" name="start_date" value="{{ $startDate ?? '' }}" class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label for="end_date" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Hingga</label>
+                        <input type="date" id="end_date" name="end_date" value="{{ $endDate ?? '' }}" class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <button type="submit" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Terapkan</button>
+                    <a href="{{ route('admin.dashboard', ['period' => $period]) }}" class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100">Reset</a>
+                </form>
+
+                <div class="mt-4 flex flex-wrap gap-2">
+                    <a href="{{ route('admin.dashboard', array_filter(['period' => 'week', 'start_date' => $startDate ?? null, 'end_date' => $endDate ?? null], fn ($value) => $value !== null && $value !== '')) }}" class="rounded-full px-3 py-1.5 text-sm font-medium {{ $period === 'week' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600' }}">Minggu</a>
+                    <a href="{{ route('admin.dashboard', array_filter(['period' => 'month', 'start_date' => $startDate ?? null, 'end_date' => $endDate ?? null], fn ($value) => $value !== null && $value !== '')) }}" class="rounded-full px-3 py-1.5 text-sm font-medium {{ $period === 'month' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600' }}">Bulanan</a>
+                </div>
+
                 <div class="mt-6 flex h-48 items-end gap-3">
-                    @foreach($attendanceTrend as $item)
+                    @forelse($attendanceTrend as $item)
                         @php $share = $item['total'] > 0 ? round(($item['present'] / $item['total']) * 100, 0) : 0; @endphp
                         <div class="flex flex-1 flex-col items-center">
                             <div class="flex h-36 w-full items-end rounded-2xl bg-slate-100 p-2">
@@ -53,7 +72,9 @@
                             <div class="mt-2 text-center text-xs font-semibold text-slate-600">{{ $item['label'] }}</div>
                             <div class="text-[11px] text-slate-400">{{ $item['present'] }}/{{ $item['total'] }}</div>
                         </div>
-                    @endforeach
+                    @empty
+                        <div class="text-sm text-slate-500">Belum ada data kehadiran untuk periode ini.</div>
+                    @endforelse
                 </div>
             </div>
 
