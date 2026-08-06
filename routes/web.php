@@ -56,3 +56,14 @@ Route::middleware(['auth','verified','checkrole:2'])->prefix('teacher')->as('tea
 
 
 
+use Illuminate\Support\Facades\File;
+
+Route::get('/render-log', function () {
+    $file = storage_path('logs/laravel.log');
+
+    if (!File::exists($file)) {
+        return 'Log tidak ditemukan';
+    }
+
+    return '<pre>'.File::get($file).'</pre>';
+});
