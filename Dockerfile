@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg62-turbo-dev \
     libfreetype6-dev \
+    libicu-dev \
     libonig-dev \
     libxml2-dev \
     nodejs \
@@ -21,13 +22,20 @@ RUN apt-get update && apt-get install -y \
         pdo \
         pdo_mysql \
         zip \
-    && update-ca-certificates
+        intl \
+        bcmath \
+        exif \
+    && update-ca-certificates \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# Working directory
 WORKDIR /var/www
 
+# Copy project
 COPY . .
 
 # Install PHP dependencies
@@ -36,15 +44,14 @@ RUN composer install --no-dev --optimize-autoloader
 # Install Node dependencies
 RUN npm install
 
-# Build Vite
+# Build Vite assets
 RUN npm run build
 
-# Laravel cache
-RUN php artisan config:clear || true
-RUN php artisan cache:clear || true
-RUN php artisan route:clear || true
-RUN php artisan view:clear || true
+# Optimize Laravel
+RUN php artisan config:cache || true
+RUN php artisan route:cache || true
+RUN php artisan view:cache || true
 
 EXPOSE 10000
 
-CMD php artisan serve --host=0.0.0.0 --port=${PORT:-10000}
+CMD ["sh", "-c", "php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"]
