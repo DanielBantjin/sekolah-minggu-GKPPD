@@ -7,6 +7,27 @@ use Tests\TestCase;
 
 class AdminDashboardTest extends TestCase
 {
+    public function test_admin_overview_page_is_accessible_for_authenticated_admin(): void
+    {
+        Artisan::call('migrate:refresh', ['--force' => true]);
+
+        $role = \App\Models\Role::create(['name' => 'admin']);
+        $user = \App\Models\User::create([
+            'name' => 'Admin Tester Overview',
+            'email' => 'admin-overview@example.com',
+            'password' => \Illuminate\Support\Facades\Hash::make('password'),
+            'role_id' => $role->id,
+            'email_verified_at' => now(),
+        ]);
+
+        $response = $this->actingAs($user)->get('/admin');
+
+        $response->assertOk();
+        $response->assertSee('Kelola Role');
+        $response->assertSee('Kelola User');
+        $response->assertSee('Kelola Murid');
+    }
+
     public function test_admin_dashboard_is_accessible_for_authenticated_admin(): void
     {
         Artisan::call('migrate:refresh', ['--force' => true]);

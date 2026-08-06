@@ -12,6 +12,10 @@ use App\Http\Controllers\Admin\ActivityController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified', 'checkrole:1'])->prefix('admin')->as('admin.')->group(function () {
+    Route::get('/', function () {
+        return view('admin.overview');
+    })->name('overview');
+
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('reports/export-excel', [DashboardController::class, 'exportExcel'])->name('reports.export-excel');
     Route::get('reports/pdf', [DashboardController::class, 'pdf'])->name('reports.pdf');
