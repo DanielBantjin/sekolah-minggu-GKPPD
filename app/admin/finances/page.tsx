@@ -1,0 +1,14 @@
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import { getCurrentUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+
+export default async function FinancePage() {
+  const user = await getCurrentUser();
+  if (!user || user.role?.name !== "admin") redirect("/dashboard");
+  const records = await prisma.finance.findMany({ include: { recorder: true }, orderBy: { date: "desc" }, take: 100 });
+  const income = records.filter((item) => item.type === "pemasukan").reduce((total, item) => total + Number(item.amount), 0);
+  const expense = records.filter((item) => item.type === "pengeluaran").reduce((total, item) => total + Number(item.amount), 0);
+  const balance = income - expense;
+  return <main className="dashboard-shell"><header className="dashboard-header"><div><p className="eyebrow">Panel Admin</p><h1>Kelola Keuangan</h1><p>Catat dan lihat detail pemasukan serta pengeluaran.</p></div><div className="header-actions-row"><Link className="back-link" href="/dashboard">Beranda</Link><Link className="back-link" href="/admin">Semua modul</Link></div></header><section className="finance-summary"><div className="money-stat"><span>Total pemasukan</span><strong className="income-text">Rp {income.toLocaleString("id-ID")}</strong></div><div className="money-stat"><span>Total pengeluaran</span><strong className="expense-text">Rp {expense.toLocaleString("id-ID")}</strong></div><div className="money-stat"><span>Saldo akhir</span><strong className={balance >= 0 ? "income-text" : "expense-text"}>Rp {balance.toLocaleString("id-ID")}</strong></div></section><section className="crud-panel"><form className="crud-form" action="/api/admin/finances" method="post"><label>Jenis<select name="type"><option value="pemasukan">Pemasukan</option><option value="pengeluaran">Pengeluaran</option></select></label><label>Deskripsi<input name="description" required /></label><label>Jumlah<input name="amount" type="number" min="0" required /></label><label>Tanggal<input name="date" type="date" required /></label><label>Kategori<input name="category" /></label><label>Catatan<textarea name="notes" rows={5} /></label><button type="submit">Simpan transaksi</button></form><div className="record-list">{records.length ? records.map((item) => <article className="finance-record" key={item.id}><div className="record-row"><strong>{item.description}</strong><strong className={item.type === "pemasukan" ? "income-text" : "expense-text"}>{item.type === "pemasukan" ? "+" : "-"} Rp {Number(item.amount).toLocaleString("id-ID")}</strong></div><div className="finance-meta">{item.date.toLocaleDateString("id-ID")} | {item.type} | {item.category ?? "Tanpa kategori"}</div>{item.notes && <p className="finance-notes">{item.notes}</p>}<small>Dicatat oleh: {item.recorder?.name ?? "-"}</small></article>) : <p>Belum ada transaksi.</p>}</div></section></main>;
+}

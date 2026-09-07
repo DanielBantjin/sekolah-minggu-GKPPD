@@ -1,143 +1,235 @@
 # Tracking Renungan Sekolah Minggu GKPPD
 
-Aplikasi web untuk mengelola renungan, absensi, kegiatan, dan keuangan sekolah minggu dengan antarmuka berbasis Laravel + Tailwind.
+Aplikasi web untuk mengelola renungan, reading track, kehadiran, kegiatan, keuangan, serta akun guru dan murid Sekolah Minggu GKPPD.
 
-## ✅ Status Uji Coba
+## Teknologi
 
-Aplikasi telah melalui pemeriksaan awal terhadap fitur utama, navigasi, dan tampilan antarmuka. Secara umum, fitur inti sudah dapat digunakan untuk kebutuhan operasional sehari-hari.
-
-## 🚀 Fitur Utama
-
-### 1. Dashboard Murid
-- Membuka renungan hari ini
-- Mencatat durasi pembacaan secara otomatis di background
-- Melihat daftar renungan yang sudah lewat/tersedia sebelumnya
-- Menyimpan status pembacaan tanpa menampilkan timer ke murid
-
-### 2. Dashboard Guru
-- Melihat laporan pembacaan renungan hari ini
-- Memantau durasi dan status pembacaan murid
-- Menambah, mengedit, dan menghapus renungan
-- Menilai aktivitas pembacaan melalui data yang tersimpan
-
-### 3. Dashboard Admin
-- Mengelola role, user, murid, renungan, kegiatan, absensi, keuangan, dan laporan
-- Mengakses ringkasan dashboard admin
-- Menjalankan export Excel dan PDF laporan
-
-### 4. Sistem Role & Akses
-- Admin: akses penuh ke modul utama
-- Guru: akses pada pengelolaan renungan dan laporan pembacaan
-- Murid: akses pada halaman renungan yang tersedia dan riwayat yang sudah lewat
-
-## 🧪 Hasil Uji Coba
-
-### Yang berhasil diuji
-- Halaman dashboard admin dapat dibuka dan menampilkan ringkasan data
-- Halaman login dan navigasi utama berjalan normal
-- Modul renungan untuk guru dapat diakses dan fitur CRUD sudah tersedia
-- Modul murid dapat membuka renungan yang tersedia dan melihat renungan sebelumnya
-- Tampilan utama telah diperbaiki agar teks lebih jelas dan tidak mudah menyatu dengan background
-
-### Catatan penting
-- Pengujian otomatis dengan `php artisan test` masih mengalami masalah karena environment test menggunakan SQLite dan driver yang tidak tersedia di mesin lokal (`could not find driver`).
-- Untuk penggunaan sehari-hari, aplikasi sudah bisa dioperasikan melalui browser lokal dengan server Laravel berjalan.
-
-## 🗄️ Struktur Database
-
-Tabel utama mencakup:
-- users
-- roles
-- students
-- reflections
-- reading_tracks
-- attendances
-- finances
-
-## 👥 Akun Default
-
-| Email | Password | Role |
-|-------|----------|------|
-| admin@example.com | password | Admin |
-| guru@example.com | password | Guru |
-| murid@example.com | password | Murid |
-
-## ⚙️ Teknologi Stack
-
-- Laravel 12
-- Tailwind CSS
+- Next.js 16 App Router
+- React 19
+- TypeScript
+- Prisma ORM 6
 - MySQL
-- PHP 8.2+
-- Blade + JavaScript
+- JWT session cookie
+- bcrypt untuk hashing password
 
-## 🔧 Instalasi
+## Prasyarat
+
+Pastikan perangkat sudah memiliki:
+
+- Node.js 20 atau lebih baru
+- npm
+- MySQL 8 atau MariaDB yang kompatibel
+- Git, jika menjalankan dari repository
+
+## Instalasi
+
+### 1. Clone project
 
 ```bash
-composer install
+git clone <URL-REPOSITORY>
+cd "Sekolah-Minggu Gkppd"
+```
+
+### 2. Install dependency
+
+```bash
 npm install
-cp .env.example .env
-php artisan key:generate
-php artisan migrate:fresh --seed
-npm run build
-php artisan serve
 ```
 
-Akses aplikasi di: http://127.0.0.1:8000
+### 3. Buat database MySQL
 
-## 📱 Panduan Penggunaan
+Buat database kosong, misalnya:
 
-### Untuk Murid
-1. Login menggunakan akun murid
-2. Buka menu renungan hari ini dari dashboard
-3. Baca renungan; durasi akan tercatat otomatis di background
-4. Untuk melihat renungan sebelumnya, buka menu Renungan Sebelumnya
+```sql
+CREATE DATABASE sekolah_minggu_nextjs
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+```
 
-### Untuk Guru
-1. Login menggunakan akun guru
-2. Buka menu Kelola Renungan
-3. Tambah, edit, atau hapus renungan sesuai kebutuhan
-4. Buka laporan pembacaan untuk melihat status murid
+Jika MySQL menggunakan password, sesuaikan connection string pada langkah berikutnya.
 
-### Untuk Admin
-1. Login menggunakan akun admin
-2. Kelola data master dan operasional melalui menu admin
-3. Lihat dashboard ringkasan, absensi, keuangan, dan kegiatan
-4. Gunakan export Excel/PDF jika diperlukan
+### 4. Buat file environment
 
-## 🔐 Keamanan
+Salin `.env.example` menjadi `.env.local`, kemudian isi nilainya:
 
-- Authentication Laravel Breeze
-- Role-based access control
-- CSRF protection
-- Password hashing dengan bcrypt
+```env
+NEXT_PUBLIC_APP_NAME="Tracking Renungan Sekolah Minggu"
+DATABASE_URL="mysql://root:PASSWORD@127.0.0.1:3306/sekolah_minggu_nextjs"
+AUTH_SECRET="isi-dengan-rahasia-acak-minimal-32-karakter"
+```
 
-## 📝 Route Utama
+Catatan:
 
-- `/dashboard` - dashboard sesuai role
-- `/student/reading/today` - halaman renungan murid hari ini
-- `/student/reflections` - daftar renungan sebelumnya
-- `/teacher/reflections` - pengelolaan renungan guru
-- `/teacher/reading-report/today` - laporan pembacaan guru
-- `/admin/dashboard` - dashboard admin
+- Jangan commit `.env.local`.
+- `AUTH_SECRET` wajib panjang dan acak, terutama pada production.
+- Jika MySQL lokal tidak memakai password, gunakan `mysql://root@127.0.0.1:3306/sekolah_minggu_nextjs`.
 
-## 🐛 Troubleshooting
+### 5. Siapkan struktur database
 
-### Jika database error
+Project ini belum menyediakan folder migration Prisma. Untuk database baru, jalankan:
+
 ```bash
-php artisan migrate:fresh --seed
+npx prisma generate
+npx prisma db push
 ```
 
-### Jika tampilan tidak update
+Perintah tersebut membuat tabel berdasarkan `prisma/schema.prisma`.
+
+## Menjalankan aplikasi
+
+### Mode development
+
 ```bash
-php artisan view:clear
-php artisan config:clear
+npm run dev
 ```
 
-### Jika ingin menjalankan build ulang Tailwind
+Buka [http://localhost:3000](http://localhost:3000).
+
+### Mode production lokal
+
 ```bash
 npm run build
+npm run start
 ```
 
-## 📧 Catatan
+## Login awal
 
-Aplikasi ini sudah dapat digunakan untuk kebutuhan operasional sekolah minggu, terutama untuk sistem renungan, monitoring pembacaan, absensi, kegiatan, dan keuangan. Untuk skala yang lebih besar, disarankan dilakukan pengujian lanjutan dengan data nyata dan lingkungan staging sebelum digunakan penuh oleh tim operasional.
+Gunakan akun berikut jika akun tersebut sudah tersedia pada database:
+
+| Role | Username | Password |
+| --- | --- | --- |
+| Admin | `admin.gkppd` | `admin123` |
+| Guru | `guru.gkppd` | `guru123` |
+| Sekretaris | `sekretaris.gkppd` | `sekretaris123` |
+| Bendahara | `bendahara.gkppd` | `bendahara123` |
+| Murid Kecil | `murid.kecil` | `murid123` |
+| Murid Sedang | `murid.sedang` | `murid123` |
+| Murid Remaja | `murid.remaja` | `murid123` |
+
+Login dapat menggunakan username atau email. Ganti password akun awal sebelum aplikasi digunakan pada lingkungan nyata.
+
+## Alur penggunaan berdasarkan role
+
+### Admin
+
+Admin memiliki akses penuh untuk:
+
+- Mengelola role dan user
+- Mengelola data murid dan kelas
+- Membuat, mengubah, dan menghapus renungan
+- Mengelola kegiatan, reading track, kehadiran, dan keuangan
+- Melihat laporan serta ringkasan dashboard
+
+### Guru
+
+Guru dapat:
+
+- Membuat dan mengelola renungan
+- Mencatat kehadiran berdasarkan kelas Kecil, Sedang, dan Remaja
+- Mengubah atau menghapus catatan kehadiran
+- Melihat laporan reading berdasarkan tanggal dan kelas
+
+### Sekretaris
+
+Sekretaris memiliki akses khusus ke menu **Kegiatan** untuk:
+
+- Membuat kegiatan
+- Melihat kegiatan hari ini
+- Melihat kegiatan yang akan datang
+- Melihat kegiatan yang sudah lewat
+
+### Bendahara
+
+Bendahara memiliki akses khusus ke menu **Keuangan** untuk:
+
+- Mencatat pemasukan dan pengeluaran
+- Mengedit transaksi
+- Menghapus transaksi
+- Memfilter transaksi berdasarkan tanggal
+- Mengunduh laporan CSV
+
+### Murid
+
+Murid dapat:
+
+- Melihat renungan aktif
+- Membaca dan mencatat progress renungan
+- Melihat kalender kegiatan
+- Memilih tanggal untuk melihat detail kegiatan
+
+Pendaftaran murid tersedia melalui halaman **Daftar sebagai murid**. Username hanya digunakan untuk login, sedangkan nama lengkap digunakan pada data murid.
+
+## Keamanan aplikasi
+
+Fitur keamanan yang tersedia:
+
+- Proteksi route berdasarkan sesi dan role
+- JWT dengan issuer, audience, dan algoritma yang dibatasi
+- Cookie sesi `HttpOnly` dan `SameSite=Strict`
+- `Secure` cookie pada production
+- Rate limit login untuk mengurangi brute-force
+- Validasi input login
+- Perlindungan request cross-site pada API mutasi
+- Security headers seperti CSP, HSTS production, X-Frame-Options, dan `X-Content-Type-Options`
+
+Untuk production, gunakan HTTPS, `AUTH_SECRET` yang kuat, kredensial database khusus aplikasi, serta jangan gunakan password demo.
+
+## Perintah pengembangan
+
+```bash
+npm run dev       # Menjalankan server development
+npm run build     # Memvalidasi dan membangun aplikasi production
+npm run start     # Menjalankan hasil build production
+npm run lint      # Menjalankan ESLint
+npx prisma studio # Membuka browser database Prisma
+```
+
+## Struktur penting
+
+```text
+app/
+  api/             Route handler autentikasi dan API
+  admin/           Halaman admin
+  teacher/         Halaman guru, sekretaris, dan bendahara
+  student/         Halaman murid
+  dashboard/       Dashboard berdasarkan role
+lib/auth.ts        Pembuatan dan validasi session JWT
+prisma/schema.prisma
+proxy.ts           Proteksi request dan security headers
+```
+
+## Troubleshooting
+
+### Database tidak tersambung
+
+Periksa:
+
+1. Service MySQL sedang berjalan.
+2. Nama database dan port benar.
+3. Username/password pada `DATABASE_URL` benar.
+4. Jalankan ulang `npx prisma generate` dan `npx prisma db push`.
+
+### Login gagal
+
+Periksa username/email dan password. Pastikan role terkait sudah tersedia pada tabel `role` dan user memiliki `roleId` yang benar.
+
+### Port 3000 sedang digunakan
+
+Jalankan Next.js pada port lain:
+
+```bash
+npm run dev -- -p 3001
+```
+
+Kemudian buka [http://localhost:3001](http://localhost:3001).
+
+## Catatan deployment
+
+Sebelum deployment:
+
+1. Isi `DATABASE_URL` production.
+2. Buat `AUTH_SECRET` baru minimal 32 karakter.
+3. Aktifkan HTTPS.
+4. Jalankan `npm run build`.
+5. Jalankan `npm run start` atau deploy sesuai platform hosting.
+6. Ganti semua password akun awal.

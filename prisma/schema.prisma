@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique @db.VarChar(50)
+  description String?  @db.Text
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model User {
+  id             Int           @id @default(autoincrement())
+  name           String        @db.VarChar(255)
+  username       String?       @unique @db.VarChar(100)
+  email          String        @unique @db.VarChar(255)
+  password       String        @db.VarChar(255)
+  emailVerifiedAt DateTime?
+  teacherCode    String?       @unique @db.VarChar(50)
+  roleId         Int?
+  role           Role?         @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  student        Student?
+  reflections    Reflection[]
+  activities     Activity[]
+  finances      Finance[]      @relation("RecordedFinances")
+  attendances   Attendance[]   @relation("RecordedAttendances")
+  sessions      Session[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Session {
+  id        String   @id
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  @@index([userId])
+}
+
+model Student {
+  id            Int           @id @default(autoincrement())
+  userId        Int           @unique
+  studentId     String        @unique @db.VarChar(100)
+  classLabel    String?       @db.VarChar(100)
+  birthDate     DateTime?
+  parentName    String?       @db.VarChar(255)
+  phone         String?       @db.VarChar(50)
+  parentPhone   String?       @db.VarChar(50)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  readingTracks ReadingTrack[]
+  attendances   Attendance[]
+  finances      Finance[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Reflection {
+  id           Int           @id @default(autoincrement())
+  createdById  Int
+  title        String        @db.VarChar(255)
+  content      String        @db.Text
+  date         DateTime      @db.Date
+  image        String?       @db.VarChar(500)
+  bibleVerse   String?       @db.VarChar(255)
+  active       Boolean       @default(true)
+  creator      User          @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  readingTracks ReadingTrack[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  @@index([date, active])
+}
+
+model ReadingTrack {
+  id           Int        @id @default(autoincrement())
+  studentId    Int
+  reflectionId Int
+  readAt       DateTime   @default(now())
+  duration     Int        @default(0)
+  completed    Boolean    @default(false)
+  student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  reflection   Reflection @relation(fields: [reflectionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  @@index([studentId, reflectionId, readAt])
+}
+
+model Attendance {
+  id           Int       @id @default(autoincrement())
+  studentId    Int?
+  recordedById Int?
+  date         DateTime  @db.Date
+  status       String    @db.VarChar(50)
+  classLabel   String?   @db.VarChar(100)
+  presentCount Int?
+  totalCount   Int?
+  student      Student?  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  recorder     User?     @relation("RecordedAttendances", fields: [recordedById], references: [id], onDelete: SetNull)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  @@index([date])
+}
+
+model Finance {
+  id          Int       @id @default(autoincrement())
+  studentId   Int?
+  recordedById Int?
+  type        String    @db.VarChar(50)
+  description String    @db.VarChar(255)
+  amount      Decimal   @db.Decimal(15, 2)
+  date        DateTime  @db.Date
+  category    String?   @db.VarChar(100)
+  notes       String?   @db.Text
+  student     Student?  @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  recorder    User?     @relation("RecordedFinances", fields: [recordedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  @@index([date])
+}
+
+model Activity {
+  id          Int      @id @default(autoincrement())
+  createdById Int?
+  title       String   @db.VarChar(255)
+  date        DateTime @db.Date
+  startTime   String?  @db.VarChar(10)
+  endTime     String?  @db.VarChar(10)
+  location    String?  @db.VarChar(255)
+  category    String?  @db.VarChar(100)
+  description String?  @db.Text
+  creator     User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([date])
+}
