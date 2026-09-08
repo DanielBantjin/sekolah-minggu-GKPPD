@@ -18,7 +18,7 @@ export async function createSession(userId: number) {
     .setIssuer("gkppd-sekolah-minggu")
     .setAudience("gkppd-web")
     .setIssuedAt()
-    .setExpirationTime(SESSION_MAX_AGE)
+    .setExpirationTime(`${SESSION_MAX_AGE}s`)
     .sign(secret);
   const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, token, {
