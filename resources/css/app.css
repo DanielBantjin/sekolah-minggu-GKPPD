@@ -1,0 +1,197 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --primary:#4F8EF7;
+    --primary-hover:#3A7BE8;
+    --secondary:#7BC6CC;
+    --accent:#FFD166;
+    --success:#22C55E;
+    --warning:#F59E0B;
+    --danger:#EF4444;
+    --background:#F8FAFC;
+    --surface:#FFFFFF;
+    --sidebar:#FFFFFF;
+    --navbar:#FFFFFF;
+    --card:#FFFFFF;
+    --card-hover:#F1F5F9;
+    --border:#E2E8F0;
+    --heading:#1E293B;
+    --text:#475569;
+    --text-light:#64748B;
+    --disabled:#94A3B8;
+    --white:#FFFFFF;
+    --input:#FFFFFF;
+    --input-border:#CBD5E1;
+    --table-header:#F1F5F9;
+    --table-hover:#F8FAFC;
+    --shadow:0 8px 24px rgba(15,23,42,.08);
+    --radius:14px;
+}
+
+body {
+    background-color: var(--background);
+    color: var(--text);
+    background-image:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 24%),
+        radial-gradient(circle at top right, rgba(124, 58, 237, 0.12), transparent 28%),
+        radial-gradient(circle at bottom left, rgba(251, 191, 36, 0.12), transparent 24%);
+    background-attachment: fixed;
+}
+
+@keyframes float-soft {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-6px); }
+}
+
+@keyframes shimmer-slow {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.hero-glow {
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-glow::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.16) 1px, transparent 1px);
+    background-size: 18px 18px;
+    opacity: 0.35;
+    pointer-events: none;
+}
+
+.hero-glow::after {
+    content: '';
+    position: absolute;
+    inset: -30% 0 auto auto;
+    width: 180px;
+    height: 180px;
+    background: radial-gradient(circle, rgba(255,255,255,0.22), transparent 70%);
+    filter: blur(10px);
+    animation: float-soft 4s ease-in-out infinite;
+}
+
+.hover-lift {
+    transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.12);
+}
+
+.star-badge {
+    position: relative;
+    overflow: hidden;
+}
+
+.star-badge::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent);
+    transform: translateX(-100%);
+    animation: shimmer-slow 3.2s linear infinite;
+}
+
+.theme-card {
+    background-color: var(--card);
+    color: var(--text);
+    border-color: var(--border);
+}
+
+.theme-surface {
+    background-color: var(--surface);
+    color: var(--heading);
+    border-color: var(--border);
+}
+
+.theme-heading {
+    color: var(--heading);
+}
+
+.theme-muted {
+    color: var(--text-light);
+}
+
+.theme-hero {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: var(--white);
+}
+
+.theme-btn-primary {
+    background-color: var(--primary);
+    color: var(--white);
+}
+
+.theme-btn-primary:hover {
+    background-color: var(--primary-hover);
+}
+
+.bg-white {
+    background-color: var(--card) !important;
+}
+
+.bg-slate-50 {
+    background-color: var(--table-header) !important;
+}
+
+.border-slate-200,
+.border-slate-300,
+.border-indigo-100,
+.border-emerald-200,
+.border-fuchsia-200 {
+    border-color: var(--border) !important;
+}
+
+.text-slate-900,
+.text-slate-800 {
+    color: var(--heading) !important;
+}
+
+.text-slate-700 {
+    color: var(--text) !important;
+}
+
+.text-slate-600,
+.text-slate-500 {
+    color: var(--text-light) !important;
+}
+
+.text-gray-600,
+.text-gray-500,
+.text-gray-700,
+.text-gray-800,
+.text-gray-900 {
+    color: var(--heading) !important;
+}
+
+.text-gray-600,
+.text-gray-500 {
+    color: var(--text-light) !important;
+}
+
+.shadow-sm {
+    box-shadow: var(--shadow) !important;
+}
+
+.bg-blue-600 {
+    background-color: var(--primary) !important;
+}
+
+.bg-blue-700 {
+    background-color: var(--primary-hover) !important;
+}
+
+.bg-indigo-600 {
+    background-color: var(--primary) !important;
+}
+
+.bg-indigo-700 {
+    background-color: var(--primary-hover) !important;
+}
