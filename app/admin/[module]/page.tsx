@@ -2,10 +2,11 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { hasAdminAccess } from "@/lib/permissions";
 
 const definitions = {
   roles: { label: "Role", model: "role", fields: ["name", "description"] },
-  users: { label: "User", model: "user", fields: ["name", "email", "password", "role"] },
+  users: { label: "User", model: "user", fields: ["name", "username", "email", "password", "role"] },
   students: { label: "Murid", model: "student", fields: ["name", "birthDate", "phone", "parentName", "parentPhone", "classLabel"] },
   reflections: { label: "Renungan", model: "reflection", fields: ["title", "content", "date", "bibleVerse"] },
   "reading-tracks": { label: "Reading Track", model: "readingTrack", fields: [] },
@@ -19,7 +20,7 @@ export default async function AdminModulePage({ params, searchParams }: { params
   const user = await getCurrentUser();
   const { module } = await params;
   if (!(module in definitions)) notFound();
-  if (!user || user.role?.name !== "admin") redirect("/dashboard");
+  if (!user || !hasAdminAccess(user.role?.name)) redirect("/dashboard");
   const definition = definitions[module as ModuleName];
   if (module === "attendances") {
     const month = (await searchParams).month ?? "";
@@ -41,6 +42,6 @@ export default async function AdminModulePage({ params, searchParams }: { params
   }
   const records = await (prisma as unknown as Record<string, { findMany: (args: object) => Promise<Record<string, unknown>[]> }>)[definition.model].findMany({ take: 100, orderBy: { id: "desc" }, ...(module === "students" ? { include: { user: true } } : {}), ...(module === "reflections" ? { include: { creator: true } } : {}), ...(module === "finances" ? { include: { recorder: true } } : {}) });
   const optional = ["description", "password", "bibleVerse", "classLabel", "parentName", "parentPhone", "phone", "category", "notes", "startTime", "endTime"];
-  const labels: Record<string, string> = { role: "Peran", name: "Nama", birthDate: "Tanggal lahir", phone: "No. telepon", parentName: "Nama orang tua", parentPhone: "No. telepon orang tua", classLabel: "Kelas", content: "Konten renungan", status: "Status", type: "Jenis transaksi" };
+  const labels: Record<string, string> = { role: "Peran", name: "Nama", username: "Username", email: "Email", password: "Password", birthDate: "Tanggal lahir", phone: "No. telepon", parentName: "Nama orang tua", parentPhone: "No. telepon orang tua", classLabel: "Kelas", content: "Konten renungan", status: "Status", type: "Jenis transaksi" };
   return <main className="dashboard-shell"><header className="dashboard-header"><div><p className="eyebrow">Panel Admin</p><h1>Kelola {definition.label}</h1><p>Tambah, ubah, dan hapus data langsung dari database MySQL.</p></div><div className="header-actions-row"><Link className="back-link" href="/dashboard">Beranda</Link><Link className="back-link" href="/admin">Semua modul</Link></div></header><section className="crud-panel"><form className="crud-form" action={`/api/admin/${module}`} method="post">{definition.fields.map((field) => <label className={field === "content" ? "wide-field" : ""} key={field}>{labels[field] ?? field}{field === "role" ? <select name={field} defaultValue="guru"><option value="admin">Administrator</option><option value="guru">Guru</option><option value="sekretaris">Sekretaris</option><option value="bendahara">Bendahara</option><option value="murid">Murid</option></select> : field === "status" ? <select name={field} defaultValue="hadir"><option value="hadir">Hadir</option><option value="izin">Izin</option><option value="sakit">Sakit</option><option value="alpa">Alpa</option></select> : field === "type" ? <select name={field} defaultValue="pemasukan"><option value="pemasukan">Pemasukan</option><option value="pengeluaran">Pengeluaran</option></select> : field === "classLabel" ? <select name={field} defaultValue="Kecil"><option value="Kecil">Kelas Kecil</option><option value="Sedang">Kelas Sedang</option><option value="Remaja">Kelas Remaja</option></select> : field === "content" || field === "description" || field === "notes" ? <textarea name={field} rows={field === "content" ? 12 : 4} required={!optional.includes(field)} /> : <input name={field} type={field === "password" ? "password" : field === "date" || field === "birthDate" ? "date" : "text"} required={!optional.includes(field)} />}</label>)}<button type="submit">Tambah data</button></form><div className="record-list">{records.length === 0 ? <p>Belum ada data.</p> : records.map((record) => <div className="record-row" key={String(record.id)}><span>#{String(record.id)} {String((record.user as { name?: string } | undefined)?.name ?? record.name ?? record.title ?? record.description ?? record.status ?? "Data")} {module === "reflections" && <small>Oleh: {String((record.creator as { name?: string } | undefined)?.name ?? "-")}</small>}</span><span className="record-actions"><Link href={`/admin/${module}/edit/${String(record.id)}`}>Edit</Link><form action={`/api/admin/${module}?id=${String(record.id)}`} method="post"><input type="hidden" name="_method" value="DELETE" /><button className="delete-button">Hapus</button></form></span></div>)}</div></section></main>;
 }

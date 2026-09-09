@@ -2,12 +2,13 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { hasAdminAccess } from "@/lib/permissions";
 
 const levels = ["Kecil", "Sedang", "Remaja"] as const;
 
 export default async function AttendancePage({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
   const user = await getCurrentUser();
-  if (!user || user.role?.name !== "admin") redirect("/dashboard");
+  if (!user || !hasAdminAccess(user.role?.name)) redirect("/dashboard");
   const requestedMonth = (await searchParams).month ?? "";
   const month = /^\d{4}-\d{2}$/.test(requestedMonth) ? requestedMonth : new Date().toISOString().slice(0, 7);
   const start = new Date(`${month}-01T00:00:00.000Z`);

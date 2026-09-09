@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { hasAdminAccess } from "@/lib/permissions";
 
 const definitions = {
   roles: { model: "role", fields: ["name", "description"] },
@@ -18,7 +19,7 @@ type ModuleName = keyof typeof definitions;
 
 function canAccessModule(userRole: string | undefined, moduleName: string) {
   const roleName = userRole ?? "";
-  if (roleName === "admin") return true;
+  if (hasAdminAccess(roleName)) return true;
   if (roleName === "guru") return ["reflections"].includes(moduleName);
   if (roleName === "sekretaris") return ["activities"].includes(moduleName);
   if (roleName === "bendahara") return ["finances"].includes(moduleName);
@@ -60,6 +61,13 @@ export async function POST(request: Request, context: { params: Promise<{ module
     const data: Record<string, unknown> = {};
     for (const field of definition.fields) { const value = formData.get(field); if (value !== null && value !== "") data[field] = parseValue(field, value); }
     if (typeof data.password === "string") { const { hash } = await import("bcryptjs"); data.password = await hash(data.password, 12); }
+    if (module === "users" && typeof data.username === "string") data.username = data.username.trim().toLowerCase();
+    if (module === "users" && typeof data.role === "string") {
+      const role = await prisma.role.findUnique({ where: { name: data.role } });
+      if (!role) return NextResponse.json({ error: "Role tidak valid" }, { status: 422 });
+      data.roleId = role.id;
+      delete data.role;
+    }
     await (prisma as unknown as Record<string, { update: (args: object) => Promise<unknown> }>)[definition.model].update({ where: { id }, data });
     const redirectTarget = module === "reflections" ? "/teacher/reflections" : `/admin/${module}`;
     return NextResponse.redirect(new URL(redirectTarget, request.url), 303);
@@ -81,17 +89,30 @@ export async function POST(request: Request, context: { params: Promise<{ module
     const { hash } = await import("bcryptjs");
     data.password = await hash(data.password, 12);
   }
+  if (module === "roles") {
+    const roles = await prisma.role.findMany({ select: { id: true }, orderBy: { id: "asc" } });
+    const occupiedIds = new Set(roles.map((role) => role.id));
+    let nextId = 1;
+    while (occupiedIds.has(nextId)) nextId += 1;
+    data.id = nextId;
+  }
+  if (module === "users") {
+    if (typeof data.username !== "string" || !data.username.trim() || typeof data.email !== "string" || !data.email.trim() || typeof data.password !== "string" || !data.password || typeof data.role !== "string" || !data.role) {
+      return NextResponse.json({ error: "Nama pengguna, email, password, dan role wajib diisi" }, { status: 422 });
+    }
+    data.username = data.username.trim().toLowerCase();
+  }
+  if (module === "reflections") data.createdById = user.id;
+  if (module === "activities") data.createdById = user.id;
+  if (module === "finances") data.recordedById = user.id;
   if (module === "users" && typeof data.role === "string") {
     const role = await prisma.role.findUnique({ where: { name: data.role } });
     if (!role) return NextResponse.json({ error: "Role tidak valid" }, { status: 422 });
     data.roleId = role.id;
     delete data.role;
-  }
-  if (module === "reflections") data.createdById = user.id;
-  if (module === "activities") data.createdById = user.id;
-  if (module === "finances") data.recordedById = user.id;
-  if (module === "users" && data.roleId === 2) {
-    data.teacherCode = `G-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
+    if (role.name === "guru") {
+      data.teacherCode = `G-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
+    }
   }
   if (module === "students") {
     const code = `M-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;

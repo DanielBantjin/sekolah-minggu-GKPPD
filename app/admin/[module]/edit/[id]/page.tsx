@@ -2,6 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { hasAdminAccess } from "@/lib/permissions";
 
 const definitions = { roles: ["name", "description"], users: ["name", "username", "email", "password", "role"], students: ["name", "birthDate", "phone", "parentName", "parentPhone", "classLabel"], reflections: ["createdById", "title", "content", "date", "bibleVerse"], "reading-tracks": ["studentId", "reflectionId", "duration", "completed"], attendances: ["studentId", "date", "status", "classLabel", "presentCount", "totalCount"], finances: ["studentId", "type", "description", "amount", "date", "category", "notes"], activities: ["createdById", "title", "date", "startTime", "endTime", "location", "category", "description"] } as const;
 type ModuleName = keyof typeof definitions;
@@ -9,7 +10,7 @@ type ModuleName = keyof typeof definitions;
 export default async function EditModulePage({ params }: { params: Promise<{ module: string; id: string }> }) {
   const user = await getCurrentUser();
   const { module, id } = await params;
-  if (!user || user.role?.name !== "admin") redirect("/dashboard");
+  if (!user || !hasAdminAccess(user.role?.name)) redirect("/dashboard");
   if (!(module in definitions)) notFound();
   if (module === "attendances" || module === "reading-tracks") notFound();
   const model = module.replace("-tracks", "Track").replace(/s$/, "").replace(/^./, (letter) => letter.toLowerCase());

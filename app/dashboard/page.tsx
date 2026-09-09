@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { AnalyticsChart } from "./AnalyticsChart";
+import { hasAdminAccess } from "@/lib/permissions";
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ start?: string; end?: string }> }) {
   const user = await getCurrentUser();
@@ -29,7 +30,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const attendanceChart = summarizeAttendance(attendanceRows);
   const financeChart = summarizeFinance(financeRows);
   const financeTotals = summarizeFinanceTotals(financeRows);
-  const isAdmin = user.role?.name === "admin";
+  const isAdmin = hasAdminAccess(user.role?.name);
   const isStudent = user.role?.name === "murid";
   const modules = isAdmin
     ? [
