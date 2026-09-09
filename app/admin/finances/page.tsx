@@ -2,11 +2,11 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { hasAdminAccess } from "@/lib/permissions";
+import { isAdmin } from "@/lib/permissions";
 
 export default async function FinancePage() {
   const user = await getCurrentUser();
-  if (!user || !hasAdminAccess(user.role?.name)) redirect("/dashboard");
+  if (!user || !isAdmin(user.role?.name)) redirect("/dashboard");
   const records = await prisma.finance.findMany({ include: { recorder: true }, orderBy: { date: "desc" }, take: 100 });
   const income = records.filter((item) => item.type === "pemasukan").reduce((total, item) => total + Number(item.amount), 0);
   const expense = records.filter((item) => item.type === "pengeluaran").reduce((total, item) => total + Number(item.amount), 0);

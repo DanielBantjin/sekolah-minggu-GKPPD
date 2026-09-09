@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { hasAdminAccess } from "@/lib/permissions";
+import { isAdmin } from "@/lib/permissions";
 
 function csvCell(value: unknown) { return `"${String(value ?? "").replaceAll('"', '""')}"`; }
 
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user || !hasAdminAccess(user.role?.name)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user || !isAdmin(user.role?.name)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const [attendance, finance] = await Promise.all([
     prisma.attendance.findMany({ include: { student: { include: { user: true } } }, orderBy: { date: "desc" }, take: 1000 }),
     prisma.finance.findMany({ orderBy: { date: "desc" }, take: 1000 }),

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { AnalyticsChart } from "./AnalyticsChart";
-import { hasAdminAccess } from "@/lib/permissions";
+import { isAdmin } from "@/lib/permissions";
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ start?: string; end?: string }> }) {
   const user = await getCurrentUser();
@@ -30,20 +30,16 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const attendanceChart = summarizeAttendance(attendanceRows);
   const financeChart = summarizeFinance(financeRows);
   const financeTotals = summarizeFinanceTotals(financeRows);
-  const isAdmin = hasAdminAccess(user.role?.name);
+  const adminUser = isAdmin(user.role?.name);
   const isStudent = user.role?.name === "murid";
-  const modules = isAdmin
+  const modules = adminUser
     ? [
         ["Kelola Role", "/admin/roles"], ["Kelola User", "/admin/users"], ["Kelola Murid", "/admin/students"],
         ["Kelola Renungan", "/admin/reflections"], ["Reading Track", "/admin/reading-tracks"], ["Kelola Kegiatan", "/admin/activities"],
         ["Kelola Kehadiran", "/admin/attendances"], ["Kelola Keuangan", "/admin/finances"],
       ]
-    : user.role?.name === "guru"
-      ? [["Renungan", "/teacher/reflections"], ["Catat Kehadiran", "/teacher/attendance"], ["Laporan Reading", "/teacher/reading-report"]]
-      : user.role?.name === "sekretaris"
-        ? [["Kegiatan", "/teacher/activities"]]
-        : user.role?.name === "bendahara"
-          ? [["Keuangan", "/teacher/finance"]]
+    : ["guru", "sekretaris", "bendahara"].includes(user.role?.name ?? "")
+      ? [["Renungan", "/teacher/reflections"], ["Catat Kehadiran", "/teacher/attendance"], ["Kegiatan", "/teacher/activities"]]
           : [["Renungan Hari Ini", "/student/reading"], ["Daftar Renungan", "/student/reflections"], ["Kegiatan", "/student/activities"]];
   const roleBadge = user.role?.name ? user.role.name.charAt(0).toUpperCase() + user.role.name.slice(1) : "Pengguna";
 
@@ -100,10 +96,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       </>
     ) : (
       <>
-        <section className="stats-grid"><Stat label="Murid" value={students} /><Stat label="Renungan" value={reflections} /><Stat label="Kegiatan" value={activities} /><Stat label="Transaksi" value={finances} />{isAdmin && <Stat label="Kehadiran" value={attendance} />}</section>
-        {isAdmin && <section className="finance-summary"><MoneyStat label="Total pemasukan" value={financeTotals.income} className="income-text" /><MoneyStat label="Total pengeluaran" value={financeTotals.expense} className="expense-text" /><MoneyStat label="Saldo akhir" value={financeTotals.balance} className={financeTotals.balance >= 0 ? "income-text" : "expense-text"} /></section>}
-        {isAdmin && <><form className="filter-form" method="get"><label>Dari<input type="date" name="start" defaultValue={filters.start} /></label><label>Sampai<input type="date" name="end" defaultValue={filters.end} /></label><button type="submit">Terapkan</button><Link href="/dashboard">Reset</Link></form><div className="report-actions"><Link href="/api/reports/csv">Unduh laporan CSV</Link><Link href="/admin/attendances">Kelola kehadiran</Link><Link href="/admin/reports">Laporan cetak</Link></div></>}
-        {isAdmin && <section className="chart-grid"><AnalyticsChart title="Grafik Kehadiran" items={attendanceChart.map((item) => ({ label: item.label, value: item.value, color: "#2563eb" }))} /><AnalyticsChart title="Grafik Keuangan" items={financeChart.map((item) => ({ label: item.label, value: item.value, color: item.type === "pemasukan" ? "#059669" : "#dc2626" }))} format="currency" /></section>}
+        <section className="stats-grid"><Stat label="Murid" value={students} /><Stat label="Renungan" value={reflections} /><Stat label="Kegiatan" value={activities} /><Stat label="Transaksi" value={finances} />        {adminUser && <Stat label="Kehadiran" value={attendance} />}</section>
+        {adminUser && <section className="finance-summary"><MoneyStat label="Total pemasukan" value={financeTotals.income} className="income-text" /><MoneyStat label="Total pengeluaran" value={financeTotals.expense} className="expense-text" /><MoneyStat label="Saldo akhir" value={financeTotals.balance} className={financeTotals.balance >= 0 ? "income-text" : "expense-text"} /></section>}
+        {adminUser && <><form className="filter-form" method="get"><label>Dari<input type="date" name="start" defaultValue={filters.start} /></label><label>Sampai<input type="date" name="end" defaultValue={filters.end} /></label><button type="submit">Terapkan</button><Link href="/dashboard">Reset</Link></form><div className="report-actions"><Link href="/api/reports/csv">Unduh laporan CSV</Link><Link href="/admin/attendances">Kelola kehadiran</Link><Link href="/admin/reports">Laporan cetak</Link></div></>}
+        {adminUser && <section className="chart-grid"><AnalyticsChart title="Grafik Kehadiran" items={attendanceChart.map((item) => ({ label: item.label, value: item.value, color: "#2563eb" }))} /><AnalyticsChart title="Grafik Keuangan" items={financeChart.map((item) => ({ label: item.label, value: item.value, color: item.type === "pemasukan" ? "#059669" : "#dc2626" }))} format="currency" /></section>}
       </>
     )}
     <section className="module-grid">{modules.map(([label, href]) => <Link className="module-card" href={href} key={href}><strong>{label}</strong><span>Buka fitur</span></Link>)}</section>

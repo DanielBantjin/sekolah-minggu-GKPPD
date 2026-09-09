@@ -4,10 +4,11 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { EditFormModal } from "../components/EditFormModal";
 import { ReflectionEditor } from "./ReflectionEditor";
+import { canManageWeeklyData } from "@/lib/permissions";
 
 export default async function TeacherReflectionsPage() {
   const user = await getCurrentUser();
-  if (!user || user.role?.name !== "guru") redirect("/dashboard");
+  if (!user || !canManageWeeklyData(user.role?.name)) redirect("/dashboard");
 
   const reflections = await prisma.reflection.findMany({
     where: { createdById: user.id },

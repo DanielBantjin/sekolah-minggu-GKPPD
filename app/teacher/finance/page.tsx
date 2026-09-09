@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isAdmin } from "@/lib/permissions";
 import { EditFormModal } from "../components/EditFormModal";
 
 export default async function TeacherFinancePage({
@@ -10,8 +11,7 @@ export default async function TeacherFinancePage({
   searchParams: Promise<{ start?: string; end?: string }>;
 }) {
   const user = await getCurrentUser();
-  const allowedRoles = ["admin", "bendahara"];
-  if (!user || !allowedRoles.includes(user.role?.name ?? "")) redirect("/dashboard");
+  if (!user || !isAdmin(user.role?.name)) redirect("/dashboard");
 
   const params = await searchParams;
   const start = params.start ?? "";
@@ -48,7 +48,7 @@ export default async function TeacherFinancePage({
     <main className="dashboard-shell">
       <header className="dashboard-header">
         <div>
-          <p className="eyebrow">{user.role?.name === "bendahara" ? "Bendahara" : "Guru"}</p>
+          <p className="eyebrow">Administrator</p>
           <h1>Keuangan</h1>
           <p>Pencatatan pemasukan dan pengeluaran dengan ringkasan kas dan ekspor laporan.</p>
         </div>

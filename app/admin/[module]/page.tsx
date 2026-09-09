@@ -2,7 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { hasAdminAccess } from "@/lib/permissions";
+import { isAdmin } from "@/lib/permissions";
 
 const definitions = {
   roles: { label: "Role", model: "role", fields: ["name", "description"] },
@@ -20,7 +20,7 @@ export default async function AdminModulePage({ params, searchParams }: { params
   const user = await getCurrentUser();
   const { module } = await params;
   if (!(module in definitions)) notFound();
-  if (!user || !hasAdminAccess(user.role?.name)) redirect("/dashboard");
+  if (!user || !isAdmin(user.role?.name)) redirect("/dashboard");
   const definition = definitions[module as ModuleName];
   if (module === "attendances") {
     const month = (await searchParams).month ?? "";

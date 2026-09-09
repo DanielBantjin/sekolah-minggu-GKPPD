@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
-import { hasAdminAccess } from "@/lib/permissions";
+import { canManageWeeklyData, isAdmin } from "@/lib/permissions";
+import { getNextUserId } from "@/lib/ids";
 
 const definitions = {
   roles: { model: "role", fields: ["name", "description"] },
@@ -19,10 +20,8 @@ type ModuleName = keyof typeof definitions;
 
 function canAccessModule(userRole: string | undefined, moduleName: string) {
   const roleName = userRole ?? "";
-  if (hasAdminAccess(roleName)) return true;
-  if (roleName === "guru") return ["reflections"].includes(moduleName);
-  if (roleName === "sekretaris") return ["activities"].includes(moduleName);
-  if (roleName === "bendahara") return ["finances"].includes(moduleName);
+  if (isAdmin(roleName)) return true;
+  if (canManageWeeklyData(roleName)) return ["reflections", "activities"].includes(moduleName);
   return false;
 }
 
@@ -101,6 +100,7 @@ export async function POST(request: Request, context: { params: Promise<{ module
       return NextResponse.json({ error: "Nama pengguna, email, password, dan role wajib diisi" }, { status: 422 });
     }
     data.username = data.username.trim().toLowerCase();
+    data.id = await getNextUserId();
   }
   if (module === "reflections") data.createdById = user.id;
   if (module === "activities") data.createdById = user.id;
@@ -118,7 +118,7 @@ export async function POST(request: Request, context: { params: Promise<{ module
     const code = `M-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
     const muridRole = await prisma.role.findUnique({ where: { name: "murid" } });
     if (!muridRole) return NextResponse.json({ error: "Role murid belum tersedia" }, { status: 422 });
-    await prisma.user.create({ data: { name: String(data.name), email: `${code.toLowerCase()}@gkppd.local`, password: await hash(code, 12), roleId: muridRole.id, student: { create: { studentId: code, birthDate: data.birthDate as Date | undefined, phone: data.phone as string | undefined, parentName: data.parentName as string | undefined, parentPhone: data.parentPhone as string | undefined, classLabel: data.classLabel as string | undefined } } } });
+    await prisma.user.create({ data: { id: await getNextUserId(), name: String(data.name), email: `${code.toLowerCase()}@gkppd.local`, password: await hash(code, 12), roleId: muridRole.id, student: { create: { studentId: code, birthDate: data.birthDate as Date | undefined, phone: data.phone as string | undefined, parentName: data.parentName as string | undefined, parentPhone: data.parentPhone as string | undefined, classLabel: data.classLabel as string | undefined } } } });
     return NextResponse.redirect(new URL(`/admin/${module}?created=${code}`, request.url), 303);
   }
   await (prisma as unknown as Record<string, { create: (args: object) => Promise<unknown> }>)[definition.model].create({ data });

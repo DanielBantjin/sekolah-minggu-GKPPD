@@ -2,11 +2,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { hasAdminAccess } from "@/lib/permissions";
+import { isAdmin } from "@/lib/permissions";
 
 export default async function ReportsPage() {
   const user = await getCurrentUser();
-  if (!user || !hasAdminAccess(user.role?.name)) redirect("/dashboard");
+  if (!user || !isAdmin(user.role?.name)) redirect("/dashboard");
   const [attendance, finance] = await Promise.all([
     prisma.attendance.findMany({ include: { student: { include: { user: true } } }, orderBy: { date: "desc" }, take: 100 }),
     prisma.finance.findMany({ orderBy: { date: "desc" }, take: 100 }),

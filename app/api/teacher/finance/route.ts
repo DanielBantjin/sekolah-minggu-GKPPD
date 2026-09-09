@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isAdmin } from "@/lib/permissions";
 
 function csvCell(value: unknown) {
   return `"${String(value ?? "").replaceAll('"', '""')}"`;
@@ -8,8 +9,7 @@ function csvCell(value: unknown) {
 
 export async function GET(request: Request) {
   const user = await getCurrentUser();
-  const allowedRoles = ["admin", "bendahara"];
-  if (!user || !allowedRoles.includes(user.role?.name ?? "")) {
+  if (!user || !isAdmin(user.role?.name)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

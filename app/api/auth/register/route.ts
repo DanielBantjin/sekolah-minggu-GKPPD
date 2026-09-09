@@ -2,6 +2,7 @@ import { hash } from "bcryptjs";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/auth";
+import { getNextUserId } from "@/lib/ids";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -22,6 +23,7 @@ export async function POST(request: Request) {
   try {
     const user = await prisma.user.create({
       data: {
+        id: await getNextUserId(),
         name,
         username,
         email,

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { canManageWeeklyData } from "@/lib/permissions";
 
 const levels = ["Kecil", "Sedang", "Remaja"] as const;
 
@@ -11,8 +12,7 @@ export default async function TeacherAttendancePage({
   searchParams: Promise<{ date?: string; saved?: string }>;
 }) {
   const user = await getCurrentUser();
-  const allowedRoles = ["admin", "guru"];
-  if (!user || !allowedRoles.includes(user.role?.name ?? "")) redirect("/dashboard");
+  if (!user || !canManageWeeklyData(user.role?.name)) redirect("/dashboard");
 
   const params = await searchParams;
   const selectedDate = params.date ?? new Date().toISOString().slice(0, 10);

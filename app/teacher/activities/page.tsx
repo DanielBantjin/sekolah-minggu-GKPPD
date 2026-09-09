@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { canManageWeeklyData } from "@/lib/permissions";
 
 const tabs = [
   { key: "hari-ini", label: "Hari ini" },
@@ -15,8 +16,7 @@ export default async function TeacherActivitiesPage({
   searchParams: Promise<{ view?: string }>;
 }) {
   const user = await getCurrentUser();
-  const allowedRoles = ["admin", "sekretaris"];
-  if (!user || !allowedRoles.includes(user.role?.name ?? "")) redirect("/dashboard");
+  if (!user || !canManageWeeklyData(user.role?.name)) redirect("/dashboard");
 
   const params = await searchParams;
   const selectedView = tabs.some((tab) => tab.key === params.view) ? params.view! : "hari-ini";
